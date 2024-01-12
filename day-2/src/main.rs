@@ -3,17 +3,21 @@ use std::fs;
 // Structure to track the greatest number of each colour of cubes in a game
 // struct foobar
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Game {
     id: u32,
     maxima: ColourCount,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ColourCount {
     red: u32,
     green: u32,
     blue: u32,
+}
+
+fn calculate_power(counts: ColourCount) -> u32 {
+    counts.red * counts.green * counts.blue
 }
 
 fn get_count_from_elem(elem: &str) -> u32 {
@@ -97,7 +101,10 @@ fn main() {
     }
 
     let mut valid_games: Vec<Game> = vec![];
-    for game in games_list {
+    // We don't need to mutate games_list anymore, so we can shadow it as
+    // an immutable again.
+    let games_list_slice = &games_list[..];
+    for game in games_list_slice.iter().cloned() {
         // Check whether the game is valid; i.e. whether none of its draws had
         // any colour count exceeding the MAX_*** limits.
         if game.maxima.red <= MAX_RED
@@ -108,11 +115,18 @@ fn main() {
         }
     }
     println!("{:?}", valid_games);
+
     // Sum the IDs of valid games
     let mut sum_of_ids = 0;
     for game in valid_games {
         sum_of_ids += game.id;
     }
 
+    let mut sum_of_powers = 0;
+    for game in games_list {
+        sum_of_powers += calculate_power(game.maxima);
+    }
+
     println!("The sum of all valid game IDs is {sum_of_ids}");
+    println!("The sum of powers of ALL games is {sum_of_powers}");
 }
