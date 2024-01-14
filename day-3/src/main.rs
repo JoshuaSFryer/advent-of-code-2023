@@ -4,7 +4,17 @@ const NUM_ROWS: usize = 140;
 const NUM_COLS: usize = 140;
 
 const SYMBOL: u32 = 0xC;
+const GEAR: u32 = 0xD;
 const EMPTY: u32 = 0xF;
+
+// fn identify_gears(grid: &Grid) -> Vec<Point> {
+//     let gears: Vec<Point> = vec![];
+//     for y in 0..NUM_ROWS {
+//         for x in 0..NUM_COLS {}
+//     }
+
+//     gears
+// }
 
 fn get_neighbours(grid: &Grid, x: usize, y: usize) -> Vec<u32> {
     let mut neighbours = vec![];
@@ -39,6 +49,7 @@ struct Grid {
     values: [[u32; NUM_COLS]; NUM_ROWS],
     digit_points: Vec<Point>, // All Points that contain a digit.
     part_numbers: Vec<u32>,
+    gears: Vec<Point>,
 }
 
 impl Grid {
@@ -119,7 +130,7 @@ fn parse_part_numbers(grid: Grid) -> Vec<PartNumber> {
 
 fn build_grid(file_contents: String) -> Grid {
     let mut vals: [[u32; NUM_COLS]; NUM_ROWS] = [[EMPTY; NUM_COLS]; NUM_ROWS];
-
+    let mut gears: Vec<Point> = vec![];
     for (y, line) in file_contents.lines().enumerate() {
         for (x, c) in line.chars().enumerate() {
             if c.is_ascii_digit() {
@@ -128,6 +139,11 @@ fn build_grid(file_contents: String) -> Grid {
                     .expect("Tried to convert non-digit character to digit.");
             } else if c == '.' {
                 vals[y][x] = EMPTY;
+            } else if c == '*' {
+                vals[y][x] = GEAR;
+                gears.push(Point {
+                    coords: (x as u32, y as u32),
+                });
             } else {
                 vals[y][x] = SYMBOL;
             }
@@ -138,6 +154,7 @@ fn build_grid(file_contents: String) -> Grid {
         values: vals,
         digit_points: vec![],
         part_numbers: vec![],
+        gears: gears,
     };
 
     grid
