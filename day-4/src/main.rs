@@ -19,6 +19,40 @@ impl Card {
         }
         score
     }
+
+    fn count_matches(&self) -> u32 {
+        let mut num_matches = 0;
+        for num in &self.your_nums {
+            if self.winning_nums.contains(&num) {
+                num_matches += 1;
+            }
+        }
+        num_matches
+    }
+}
+
+// Card rewards never go backwards - i.e. card 14 will never reward a card 13.
+// They will also never reward themselves.
+// So we can roll forward through the list of cards once, looking forward.
+fn payout_copies(card: Card, card_counts: &mut [u32; 203]) -> () {
+    // Get the number of matching numbers in current card.
+    let num_matches = card.count_matches();
+
+    // Determine which cards are awarded, based on the current card's ID and
+    // the number of matches.
+    let reward_ids: Vec<u32> = ((card.id + 1)..=(card.id + num_matches)).collect();
+
+    // Add the awarded copies to the set of cards.
+    // Scale the number by how many copies of THIS card we have.
+    // All copies of a card will award identically, so we can do this
+    // instead of looping.
+    let num_copies = card_counts[(card.id - 1) as usize];
+    for id in &reward_ids {
+        card_counts[(id - 1) as usize] += num_copies;
+    }
+    let card_id = card.id;
+    println!("Card {card_id}: \t {num_copies} copies \t, contains {num_matches} matches.");
+    println!("Paying out {num_copies} copies of cards {reward_ids:?}");
 }
 
 fn assemble_digits_to_number(digits: &Vec<u32>) -> u32 {
@@ -77,11 +111,21 @@ fn main() {
     let contents: String = fs::read_to_string(file_path).expect("Unable to read input file");
     let cards = parse_cards(contents);
     let mut score_sum = 0;
+    let mut cards_sum = 0;
+    let mut card_copies_count: [u32; 203] = [1; 203];
     for card in cards {
         let score = card.compute_score();
         let id = card.id;
-        println!("Card {id}: score = {score}");
+        let num_matches = card.count_matches();
+        let num_copies = card_copies_count[(id - 1) as usize];
+        payout_copies(card, &mut card_copies_count);
+        // println!("Card {id}: score = {score}");
+        // println!("Card {id}: \t {num_copies} copies \t, contains {num_matches} matches.");
+        cards_sum += num_copies;
         score_sum += score;
     }
+    let other_sum: u32 = card_copies_count.iter().sum();
     println!("Total score of all cards: {score_sum}");
+    println!("Total count of all cards: {cards_sum}");
+    println!("Total count of all cards: {other_sum}");
 }
